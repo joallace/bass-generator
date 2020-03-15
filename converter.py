@@ -10,28 +10,36 @@ import os
 import sys
 import guitarpro as gp
 
-def toTxt(file, track):
+def toTxt(file, track, input_format):
+    insert_empty = input_format != 'gp5'
+    first_line = False
     for measure in track.measures:
+        if measure.voices[0].beats[0].status == gp.models.BeatStatus.empty:
+            continue
+        if insert_empty and first_line:
+            file.write("%s" % 'b:4,0,0\n')
         file.write("%s" % 'm:' + str(measure.timeSignature.numerator) + ',' + str(measure.timeSignature.denominator.value)+ '\n')
+        first_line = True
         for voice in measure.voices:
             for beat in voice.beats:
                 file.write("%s" % 'b:' + str(beat.duration.value) + ',' + str(int(beat.duration.isDotted)) + ',' + str(beat.status.value) + '\n')
                 for note in beat.notes:
                     file.write("%s" % 'n:' + str(note.string) + ',' + str(note.value) + ' ' + str(note.type.value) + ',' + str(int(note.effect.hammer)) + '\n')
                     
-def toGpx(file, track):
+    if insert_empty:
+            file.write("%s" % 'b:4,0,0\n')
+                    
+def toGpx(file, track):   
     measures = []
     beats = []
     notes = []
-
     
     for line in file:
         if line[:2] == 'm:':        # Measure
             if measures:
-                finish_beat = gp.models.Beat(measures[-1].voices[0], status=gp.models.BeatStatus.empty)
-                
-                if beats[-1].status != gp.models.BeatStatus.empty:
-                    beats.append(finish_beat)
+                # finish_beat = gp.models.Beat(measures[-1].voices[0], status=gp.models.BeatStatus.empty)
+                # if beats[-1].status != gp.models.BeatStatus.empty:
+                #     beats.append(finish_beat)
                     
                 measures[-1].voices[0].beats = beats
                 beats = []
@@ -77,15 +85,19 @@ def toGpx(file, track):
             note = gp.models.Note(beats[-1], effect=note_effect, type=note_type, string=note_string, value=note_value) 
             notes.append(note)
     
+    # finish_beat = gp.models.Beat(measures[-1].voices[0], status=gp.models.BeatStatus.empty)
+    # if beats[-1].status != gp.models.BeatStatus.empty:
+    #     beats.append(finish_beat)
+        
     measures[-1].voices[0].beats = beats
-
     track.measures = measures
     
+    file.close()
     return track
 
 
 if len(sys.argv) < 3:
-    print('### Missing directory path or execution mode!\n### converter.py -[txt/gpx] [input dir/output file]')
+    print('### Missing directory path or execution mode!\n### python converter.py --[txt/gpx] [input dir/output file]')
     sys.exit()
 elif len(sys.argv) > 3:
     print('### Too many parameters!')
@@ -97,21 +109,15 @@ if exec_mode ==  '--txt' or  exec_mode ==  '-t':
     src_path = sys.argv[2]
     output_file = open('output.txt', 'w')
     
-    for gpx_file in os.listdir(src_path):
-        src_file = gp.parse(os.path.join(src_path, gpx_file))
-        toTxt(output_file, src_file.tracks[0])
-        # output_file.write('\n\n\n\n')
+    for file in os.listdir(src_path):
+        gpx_file = gp.parse(os.path.join(src_path, file))
+        toTxt(output_file, gpx_file.tracks[0], os.path.splitext(file)[1])
         
     output_file.close()
     
 elif exec_mode ==  '--gpx' or exec_mode ==  '-g':
     input_file = open('output.txt', 'r')
     output_file = gp.parse('reference.gp5') # Getting a blank .gp5 file for reference
-
-    for measure in output_file.tracks[0].measures:  # Cleaning file
-        for voice in measure.voices:
-            for beat in voice.beats:
-                beat.notes = []
     
     output_file.tracks[0] = toGpx(input_file, output_file.tracks[0])
     input_file.close()
