@@ -8,10 +8,10 @@ Created on Sat Mar 14 20:24:10 2020
 
 
 from __future__ import print_function
-from keras.callbacks import LambdaCallback
-from keras.models import Sequential
-from keras.layers import Dense
-from keras.layers import CuDNNLSTM, Dropout
+from tensorflow.keras.callbacks import LambdaCallback
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.layers import LSTM, Dropout
 import numpy as np
 import random
 import sys
@@ -66,10 +66,10 @@ for i, sentence in enumerate(sentences):
 print('Build model...')
 model = Sequential()
 
-model.add(CuDNNLSTM(128, input_shape=(maxlen, len(chars)), return_sequences=True))
+model.add(LSTM(128, input_shape=(maxlen, len(chars)), return_sequences=True))
 model.add(Dropout(0.3))
 
-model.add(CuDNNLSTM(64))
+model.add(LSTM(64))
 model.add(Dropout(0.2))
 
 model.add(Dense(128))

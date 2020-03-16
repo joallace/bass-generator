@@ -34,16 +34,20 @@ def toGpx(file, track):
     beats = []
     notes = []
     
-    for line in file:
+    for i, line in enumerate(file):
         if line[:2] == 'm ':        # Measure
             if measures:
                 measures[-1].voices[0].beats = beats
                 beats = []
                 
-            parser = line.find(' ',3)
-            sig_num = int(line[2 : parser])
-            sig_dem = int(line[parser+1 : line.find('\n', parser)])
-            time_signature = gp.models.TimeSignature(numerator=sig_num, denominator=gp.models.Duration(value=sig_dem))
+            parser = line.find(' ', 3)
+            try:
+                sig_num = int(line[2 : parser])
+                sig_dem = int(line[parser+1 : line.find('\n', parser)])
+                time_signature = gp.models.TimeSignature(numerator=sig_num, denominator=gp.models.Duration(value=sig_dem))
+            except ValueError:
+                print('Invalid TimeSignature in line:', i+1)
+                break
             
             measure_header = gp.models.MeasureHeader(timeSignature=time_signature)
             measure = gp.models.Measure(track, measure_header)
@@ -54,33 +58,60 @@ def toGpx(file, track):
                 beats[-1].notes = notes
                 notes = []
                 
-            parser = line.find(' ',3)
-            duration_value = int(line[2 : parser])
-            duration_isDotted = bool(int(line[parser+1 : parser+2]))
-            beat_duration = gp.models.Duration(value=duration_value, isDotted = duration_isDotted)
+            parser = line.find(' ', 3)
+            try:
+                duration_value = int(line[2 : parser])
+                duration_isDotted = bool(int(line[parser+1 : parser+2]))
+                beat_duration = gp.models.Duration(value=duration_value, isDotted = duration_isDotted)
+            except ValueError:
+                print('Invalid BeatDuration in line:', i+1)
+                break
             
-            beat_status = int(line[parser+2 : parser+3])
-            beat_status = gp.models.BeatStatus(beat_status)
+            try:
+                beat_status = int(line[parser+2 : parser+3])
+                beat_status = gp.models.BeatStatus(beat_status)
+                beat = gp.models.Beat(measures[-1].voices[0], duration=beat_duration, status=beat_status)
+            except ValueError:
+                print('Invalid BeatStatus in line:', i+1)
+                break
+            except IndexError:
+                print('Beat before a Measure in line:', i+1)
+                break
 
-            beat = gp.models.Beat(measures[-1].voices[0], duration=beat_duration, status=beat_status)
             beats.append(beat)
             
         elif line[:2] == 'n ':      # Note
             parser = line.find(' ', 4)
-            note_string = int(line[2:3])
-            note_value = int(line[4:parser])
-            
-            note_type = int(line[parser+1 : parser+2])
-            note_type = gp.models.NoteType(note_type)
-            
-            effect_hammer = bool(int(line[parser+2 : parser+3]))
-            effect_slides = []
-            slide = int(line[parser+3 : parser+4])-3
-            if slide > 0:
-                effect_slides.append(slide)
-            note_effect = gp.models.NoteEffect(hammer=effect_hammer,slides=effect_slides)
+            try:
+                note_string = int(line[2:3])
+                note_value = int(line[4:parser])
                 
-            note = gp.models.Note(beats[-1], effect=note_effect, type=note_type, string=note_string, value=note_value) 
+                note_type = int(line[parser+1 : parser+2])
+                note_type = gp.models.NoteType(note_type)
+            except ValueError:
+                print('Invalid Note String, Value or Type in line:', i+1)
+                break
+            
+            try:
+                effect_hammer = bool(int(line[parser+2 : parser+3]))
+                effect_slides = []
+                slide = int(line[parser+3 : parser+4])-3
+                if slide > 0:
+                    effect_slides.append(slide)
+                note_effect = gp.models.NoteEffect(hammer=effect_hammer,slides=effect_slides)
+            except ValueError:
+                print('Invalid NoteEffect in line:', i+1)
+                break
+            
+            try:    
+                note = gp.models.Note(beats[-1], effect=note_effect, type=note_type, string=note_string, value=note_value) 
+            except ValueError:
+                print('Invalid Note String, Value or Type in line:', i+1)
+                break
+            except IndexError:
+                print('Note before a Beat in line:', i+1)
+                break
+                
             notes.append(note)
         
     measures[-1].voices[0].beats = beats
