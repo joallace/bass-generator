@@ -11,20 +11,20 @@ import sys
 import guitarpro as gp
 
 def toTxt(file, track, input_format):
-    insert_empty = input_format != 'gp5'
+    insert_empty = input_format != '.gp5'
     first_line = False
     for measure in track.measures:
         if measure.voices[0].beats[0].status == gp.models.BeatStatus.empty:
             continue
         if insert_empty and first_line:
-            file.write("%s" % 'b:4,0,0\n')
-        file.write("%s" % 'm:' + str(measure.timeSignature.numerator) + ',' + str(measure.timeSignature.denominator.value)+ '\n')
+            file.write('b 4 00\n')
+        file.write("%s" % 'm ' + str(measure.timeSignature.numerator) + ' ' + str(measure.timeSignature.denominator.value)+ '\n')
         first_line = True
         for voice in measure.voices:
             for beat in voice.beats:
-                file.write("%s" % 'b:' + str(beat.duration.value) + ',' + str(int(beat.duration.isDotted)) + ',' + str(beat.status.value) + '\n')
+                file.write("%s" % 'b ' + str(beat.duration.value) + ' ' + str(int(beat.duration.isDotted)) + str(beat.status.value) + '\n')
                 for note in beat.notes:
-                    file.write("%s" % 'n:' + str(note.string) + ',' + str(note.value) + ' ' + str(note.type.value) + ',' + str(int(note.effect.hammer)) + '\n')
+                    file.write("%s" % 'n ' + str(note.string) + ' ' +  str(note.value) + ' ' + str(note.type.value) + str(int(note.effect.hammer)) + str(note.effect.slides[0].value+3 if len(note.effect.slides) > 0 else '0') + '\n')
                     
     if insert_empty:
             file.write("%s" % 'b:4,0,0\n')
@@ -35,16 +35,12 @@ def toGpx(file, track):
     notes = []
     
     for line in file:
-        if line[:2] == 'm:':        # Measure
+        if line[:2] == 'm ':        # Measure
             if measures:
-                # finish_beat = gp.models.Beat(measures[-1].voices[0], status=gp.models.BeatStatus.empty)
-                # if beats[-1].status != gp.models.BeatStatus.empty:
-                #     beats.append(finish_beat)
-                    
                 measures[-1].voices[0].beats = beats
                 beats = []
                 
-            parser = line.find(',')
+            parser = line.find(' ',3)
             sig_num = int(line[2 : parser])
             sig_dem = int(line[parser+1 : line.find('\n', parser)])
             time_signature = gp.models.TimeSignature(numerator=sig_num, denominator=gp.models.Duration(value=sig_dem))
@@ -53,41 +49,39 @@ def toGpx(file, track):
             measure = gp.models.Measure(track, measure_header)
             measures.append(measure)
             
-        elif line[:2] == 'b:':      # Beat
+        elif line[:2] == 'b ':      # Beat
             if beats:
                 beats[-1].notes = notes
                 notes = []
                 
-            parser = line.find(',')
+            parser = line.find(' ',3)
             duration_value = int(line[2 : parser])
             duration_isDotted = bool(int(line[parser+1 : parser+2]))
             beat_duration = gp.models.Duration(value=duration_value, isDotted = duration_isDotted)
             
-            parser = line.find(',', parser+1)
-            beat_status = int(line[parser+1 : parser+2])
+            beat_status = int(line[parser+2 : parser+3])
             beat_status = gp.models.BeatStatus(beat_status)
 
             beat = gp.models.Beat(measures[-1].voices[0], duration=beat_duration, status=beat_status)
             beats.append(beat)
             
-        elif line[:2] == 'n:':      # Note
-            parser = line.find(' ')
+        elif line[:2] == 'n ':      # Note
+            parser = line.find(' ', 4)
             note_string = int(line[2:3])
             note_value = int(line[4:parser])
             
-            note_type = int(line[parser+1 : line.find(',', parser)])
+            note_type = int(line[parser+1 : parser+2])
             note_type = gp.models.NoteType(note_type)
             
-            parser = line.find(',', parser)
-            effect_hammer = bool(int(line[parser+1 : parser+2]))
-            note_effect = gp.models.NoteEffect(hammer=effect_hammer)
+            effect_hammer = bool(int(line[parser+2 : parser+3]))
+            effect_slides = []
+            slide = int(line[parser+3 : parser+4])-3
+            if slide > 0:
+                effect_slides.append(slide)
+            note_effect = gp.models.NoteEffect(hammer=effect_hammer,slides=effect_slides)
                 
             note = gp.models.Note(beats[-1], effect=note_effect, type=note_type, string=note_string, value=note_value) 
             notes.append(note)
-    
-    # finish_beat = gp.models.Beat(measures[-1].voices[0], status=gp.models.BeatStatus.empty)
-    # if beats[-1].status != gp.models.BeatStatus.empty:
-    #     beats.append(finish_beat)
         
     measures[-1].voices[0].beats = beats
     track.measures = measures
