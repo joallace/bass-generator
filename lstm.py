@@ -33,7 +33,7 @@ if gpus:
 else:
     print('Using CPU')
 
-path = 'output.txt'
+path = 'input.txt'
 with io.open(path, encoding='utf-8') as f:
     text = f.read().lower()
 print('corpus length:', len(text))
@@ -92,18 +92,18 @@ def sample(preds, temperature=1.0):
 
 def on_epoch_end(epoch, _):
     # Function invoked at end of each epoch. Prints generated text.
-    print()
-    print('----- Generating text after Epoch: %d' % epoch)
-
+    if epoch+1%100 != 0:
+        return
+    
     start_index = random.randint(0, len(text) - maxlen - 1)
-    for diversity in [0.5, 1.0, 1.2, 1.5, 2]:
-        print('----- diversity:', diversity)
-
+    for i, diversity in enumerate([1.0, 1.2, 1.5]):
+        file = open('results/txts/output_' + str(epoch+1) + '_' + str(i) + '.txt', 'w')
+        
+        print('\n\nDiversity: ', diversity)
         generated = ''
         sentence = text[start_index: start_index + maxlen]
         generated += sentence
-        print('----- Generating with seed: ' + sentence)
-        sys.stdout.write(generated)
+        file.write(generated)
 
         for i in range(1600):
             x_pred = np.zeros((1, maxlen, len(chars)))
@@ -116,12 +116,13 @@ def on_epoch_end(epoch, _):
 
             sentence = sentence[1:] + next_char
 
-            sys.stdout.write(next_char)
-            sys.stdout.flush()
-        print()
+            file.write(next_char)
+            
+        file.close()
 
 print_callback = LambdaCallback(on_epoch_end=on_epoch_end)
 
 model.fit(x, y,
           batch_size=1024,
-          epochs=60)
+          epochs=500,
+          callbacks=[print_callback])

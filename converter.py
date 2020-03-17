@@ -11,58 +11,63 @@ import sys
 import guitarpro as gp
 
 def toTxt(file, track, input_format):
-    insert_empty = input_format != '.gp5'
-    first_line = False
+    # insert_empty = input_format != '.gp5'
+    # first_line = False
     for measure in track.measures:
         if measure.voices[0].beats[0].status == gp.models.BeatStatus.empty:
             continue
-        if insert_empty and first_line:
-            file.write('b 4 00\n')
-        file.write("%s" % 'm ' + str(measure.timeSignature.numerator) + ' ' + str(measure.timeSignature.denominator.value)+ '\n')
-        first_line = True
+        # if insert_empty and first_line:
+        #     file.write('b 4 00\n')
         for voice in measure.voices:
             for beat in voice.beats:
-                file.write("%s" % 'b ' + str(beat.duration.value) + ' ' + str(int(beat.duration.isDotted)) + str(beat.status.value) + '\n')
+                file.write("%s" % 'b ' + str(beat.duration.value) + ' ' + str(int(beat.duration.isDotted)) + str(beat.status.value) + ' ' + str(beat.duration.tuplet.enters)  + str(beat.duration.tuplet.times)  + '\n')
                 for note in beat.notes:
                     file.write("%s" % 'n ' + str(note.string) + ' ' +  str(note.value) + ' ' + str(note.type.value) + str(int(note.effect.hammer)) + str(note.effect.slides[0].value+3 if len(note.effect.slides) > 0 else '0') + '\n')
                     
-    if insert_empty:
-            file.write('b 4 00\n')
+    # if insert_empty:
+    #         file.write('b 4 00\n')
                     
 def toGpx(file, track):   
-    measures = []
+    measure_header = gp.models.MeasureHeader()
+    measure = gp.models.Measure(track, measure_header)
+    
+    measures = [measure]
     beats = []
     notes = []
     
     for i, line in enumerate(file):
-        if line[:2] == 'm ':        # Measure
-            if measures:
-                measures[-1].voices[0].beats = beats
-                beats = []
-                
-            parser = line.find(' ', 3)
-            try:
-                sig_num = int(line[2 : parser])
-                sig_dem = int(line[parser+1 : line.find('\n', parser)])
-                time_signature = gp.models.TimeSignature(numerator=sig_num, denominator=gp.models.Duration(value=sig_dem))
-            except ValueError:
-                print('Invalid TimeSignature in line:', i+1)
-                break
-            
-            measure_header = gp.models.MeasureHeader(timeSignature=time_signature)
-            measure = gp.models.Measure(track, measure_header)
-            measures.append(measure)
-            
-        elif line[:2] == 'b ':      # Beat
+        if line[:2] == 'b ':      # Beat
             if beats:
                 beats[-1].notes = notes
                 notes = []
+                
+                beat_sum = 0
+                for b in beats:
+                    if b.status.value == 0:
+                        continue
+                    beat_sum += b.duration.tuplet.times * (1/b.duration.value + (1/(2*b.duration.value))*b.duration.isDotted) / b.duration.tuplet.enters
+                
+                if beat_sum > 1:
+                    new_beat = beats.pop(-1)
+                    beats.append(gp.models.Beat(measures[-1].voices[0], status=gp.models.BeatStatus.empty))
+                    
+                    measure_header = gp.models.MeasureHeader()
+                    measure = gp.models.Measure(track, measure_header)
+                    measures.append(measure)
+                    measures[-1].voices[0].beats = beats
+                    
+                    beats = [new_beat]
                 
             parser = line.find(' ', 3)
             try:
                 duration_value = int(line[2 : parser])
                 duration_isDotted = bool(int(line[parser+1 : parser+2]))
-                beat_duration = gp.models.Duration(value=duration_value, isDotted = duration_isDotted)
+                
+                tuplet_enters = int(line[parser+4 : parser+5])
+                tuplet_times = int(line[parser+5 : parser+6])
+                duration_tuplet = gp.models.Tuplet(tuplet_enters, tuplet_times)
+                
+                beat_duration = gp.models.Duration(value=duration_value, isDotted=duration_isDotted, tuplet= duration_tuplet)
             except ValueError:
                 print('Invalid BeatDuration in line:', i+1)
                 break
@@ -114,6 +119,12 @@ def toGpx(file, track):
                 
             notes.append(note)
         
+    beats[-1].notes = notes
+    beats.append(gp.models.Beat(measures[-1].voices[0], status=gp.models.BeatStatus.empty))
+    
+    measure_header = gp.models.MeasureHeader()
+    measure = gp.models.Measure(track, measure_header)
+    measures.append(measure)
     measures[-1].voices[0].beats = beats
     track.measures = measures
     
@@ -122,17 +133,24 @@ def toGpx(file, track):
 
 
 if len(sys.argv) < 3:
-    print('### Missing directory path or execution mode!\n### python converter.py --[txt/gpx] [input dir/output file]')
+    print('### Missing directory path or execution mode!\n### python converter.py --[txt/gpx] [input dir/input file] [output file]')
     sys.exit()
-elif len(sys.argv) > 3:
+elif len(sys.argv) > 4:
     print('### Too many parameters!')
     sys.exit()
 
 exec_mode = sys.argv[1]
 
+
+
 if exec_mode ==  '--txt' or  exec_mode ==  '-t':
+    if len(sys.argv) == 3:
+        output_file = 'output.txt'
+    else:
+        output_file = sys.argv[3]
+        
     src_path = sys.argv[2]
-    output_file = open('output.txt', 'w')
+    output_file = open(output_file, 'w')
     
     for file in os.listdir(src_path):
         gpx_file = gp.parse(os.path.join(src_path, file))
@@ -141,6 +159,11 @@ if exec_mode ==  '--txt' or  exec_mode ==  '-t':
     output_file.close()
     
 elif exec_mode ==  '--gpx' or exec_mode ==  '-g':
+    if len(sys.argv) == 3:
+        output_file_name = 'output.gp5'
+    else:
+        output_file_name = sys.argv[3]
+        
     input_file = open(sys.argv[2], 'r')
     output_file = gp.parse('reference.gp5') # Getting a blank .gp5 file for reference
     
@@ -149,7 +172,7 @@ elif exec_mode ==  '--gpx' or exec_mode ==  '-g':
     
     output_file.artist = 'JW'
     output_file.title = 'Funky Bass'
-    gp.write(output_file, 'output.gp5')
+    gp.write(output_file, output_file_name)
     
 else:
     print('### Invalid execution mode!')
