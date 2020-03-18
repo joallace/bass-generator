@@ -12,7 +12,8 @@ A bass tab generator using a LSTM approach
 The purpose of this Artificial Intelligence project is to craft bass songs from patterns of different bands and musics
 
 ## Setup
-
+- tuxguitar
+Can be downloaded in the following link : https://sourceforge.net/projects/tuxguitar/
 - tensorflow
 ```shell
 $ pip install tensorflow
@@ -81,7 +82,7 @@ A leitura sempre será feita pelo arquivo *"output.txt"* gerado pela conversão 
 ```bash
 python converter.py [-g ou --gpx] [arquivo de saida]
 ```
-**Obs:** Opte por gerar arquivos com a extensão **.gp5**.
+**Obs:** Opte por gerar arquivos com a extensão **.gp5**. para que eles possam ser visualizados no TuxGuitar como pode ser visto a seguir:
 
 ![](myimage.gif)
 
