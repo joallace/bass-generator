@@ -83,6 +83,9 @@ python converter.py [-g ou --gpx] [arquivo de saida]
 ```
 **Obs:** Opte por gerar arquivos com a extensão **.gp5**.
 
+![](myimage.gif)
+
+
 ## License
 
 [![License](http://img.shields.io/:license-mit-blue.svg?style=flat-square)](http://badges.mit-license.org)

@@ -123,9 +123,9 @@ def on_epoch_end(epoch, _):
 
 print_callback = LambdaCallback(on_epoch_end=on_epoch_end)
 
-model = load_model('weights/500epochs.h5')
+#model = load_model('weights/500epochs.h5')
 
 model.fit(x, y,
           batch_size=1024,
-          epochs=100,
+          epochs=1000,
           callbacks=[print_callback])
