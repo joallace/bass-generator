@@ -13,9 +13,9 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.layers import LSTM, Dropout
 from tensorflow.keras.models import load_model
+
 import numpy as np
 import random
-import sys
 import io
 import tensorflow as tf
 
@@ -93,14 +93,14 @@ def sample(preds, temperature=1.0):
 
 def on_epoch_end(epoch, _):
     # Function invoked at end of each epoch. Prints generated text.
-    # if epoch+1%100 != 0:
-    #     return
+    if (epoch+1)%100 != 0:
+        return
     
     start_index = random.randint(0, len(text) - maxlen - 1)
     for i, diversity in enumerate([1.0, 1.2, 1.5, 1.7]):
-        file = open('results/txts/output_' + str(epoch+1) + '_' + str(i) + '.txt', 'w')
+        file = open('results/txt/output_' + str(epoch+1) + '_' + str(i+1) + '.txt', 'w')
         
-        print('\n\nDiversity: ', diversity)
+        print('\nDiversity: ', diversity)
         generated = ''
         sentence = text[start_index: start_index + maxlen]
         generated += sentence
