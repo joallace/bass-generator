@@ -1,81 +1,80 @@
-# lstm-bass-generator
+# bass-generator
 A bass tab generator using a LSTM approach
 
 ## Contents
 - [Motivation](#Motivation)
-- [Setup](#Setup)
+- [Dependencies](#Dependencies)
 - [Data](#Data)
 - [Scripts](#Scripts)
 
 ## Motivation
 
-The purpose of this Artificial Intelligence project is to create bass riffs based on playing patterns from different bands and musics from the funk rock genre.
+The purpose of this Artificial Intelligence project is to create bass riffs based on playing patterns from different bands and musics from the *funk rock* genre.
 
-## Setup
-- tuxguitar
-Can be downloaded through the following link : https://sourceforge.net/projects/tuxguitar/
-- tensorflow
+## Dependencies
+This software depends on the following third party libraries to be executed:
+- **[TensorFlow](https://www.tensorflow.org/)**: version 2.0 or later
 ```shell
 $ pip install tensorflow
 ```
-- GuitarPro
+- **[PyGuitarPro](https://github.com/Perlence/PyGuitarPro)**: version 0.6 or later
 ```shell
 $ pip install PyGuitarPro
 ```
 
 ## Scripts
-Antes de tudo, gostaria de salientar que ao me referir ao formato **.gpx**, na verdade estou me referindo à família de arquivos Guitar Pro das versões .gp3, .gp4 e .gp5\
-A execução dos scripts é feita exclusivamente pelo terminal. Seguem abaixo suas descrições.
+First of all, I would like to point out that when referring to the **. gpx ** format, I am actually referring to the Guitar Pro .gp3, .gp4 and .gp5 formats\
+The execution of the scripts is done exclusively in the terminal. Below are their descriptions.
 
 ### bass_ripper.py
 
-Esse script possibilita fazer a separação, ou *rip*, das tracks de baixo de arquivos .gpx em um certo diretório.
+This script makes it possible to *rip* the bass track from .gpx files in a certain directory.
 
 ```bash
-python bass_ripper.py [diretorio de entrada] [diretorio de saida]
+python bass_ripper.py [input dir] [output dir]
 ```
-**SEMPRE** realize a separação das tracks antes de fazer a conversão dos arquivos.
+**ALWAYS** perform the *rip* of the bass tracks before converting any file.
 
 ### converter.py
-Esse script, como o nome sugere, será responsável pela conversão dos arquivos, podendo ser feita a conversão de .gpx para .txt e vice-versa. A saída sempre será um arquivo *"output.txt"*
+This script, as its name suggests, will be responsible for converting files. There are two execution methods, from .gpx to .txt and from .txt to .gpx.
 
-**Conversão para .txt:**
+**Conversion to .txt:**
+
+Specifying an output file is optional, the default output is "output.txt".
+```bash
+python converter.py [-t or --txt] [input dir] [output file]
+```
+The generated file will be written as follows: (see [PyGuitarPro docs](https://pyguitarpro.readthedocs.io) for better understanding)
+
+1. Beat
 
 ```bash
-python converter.py [-t ou --txt] [diretorio de entrada]
+b D OT NM
 ```
-O arquivo de texto será escrito da seguinte forma:
+A line that represents a beat will always start with a **b**, and will have the five following parameters:
+ - D: duration of the beat
+ - O: specifies if the note is dotted
+ - T: type of the beat 
+ - E: tuplet enters
+ - M: tuplet tempo
 
-1. Compasso
+
+2. Note
 
 ```bash
-m N D
+n S N THL
 ```
-A linha que representa um compasso, ou measure em inglês, sempre iniciará com um **m**, e terá dois parâmetros, sendo eles o numerador **N** e o denominador **D** da assinatura do tempo.
+A line that represents a note will always start with a **n**, and will have the five following parameters:
+ - S: bass string
+ - N: played note
+ - T: note type
+ - H: presence of hammer-on
+ - L: presence of slide
 
-**Obs:** O compasso **SEMPRE** tem que terminar com uma batida de código *b 0 00*
+**Conversion to .gpx:**
 
-
-2. Batida
+Specifying an output file is optional, the default output is "output.gp5". Note that it is preferable to generate files with the **.gp5** extension
 
 ```bash
-b D PT
+python converter.py [-g or --gpx] [input file] [output file]
 ```
-A linha que representa uma batida sempre iniciará com um **b**, e terá três parâmetros, sendo eles a duração da batida **D**, a presença do ponto **P** e o tipo da batida **T**.
-
-
-3. Nota
-
-```bash
-n C N THS
-```
-A linha que representa uma nota sempre iniciará com um **n**, e terá cinco parâmetros, sendo eles a corda do baixo **C**, a nota tocada **N**, o tipo da nota **T**, a presença de Hammer-on **H** e a presença de Slide **S**.
-
-
-**Conversão para .gpx:**
-
-A leitura sempre será feita pelo arquivo *"output.txt"* gerado pela conversão para .txt
-```bash
-python converter.py [-g ou --gpx] [arquivo de saida]
-```
-**Obs:** Opte por gerar arquivos com a extensão **.gp5**.
