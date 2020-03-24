@@ -11,21 +11,16 @@ import sys
 import guitarpro as gp
 
 def toTxt(file, track, input_format):
-    # insert_empty = input_format != '.gp5'
-    # first_line = False
     for measure in track.measures:
         if measure.voices[0].beats[0].status == gp.models.BeatStatus.empty:
             continue
-        # if insert_empty and first_line:
-        #     file.write('b 4 00\n')
         for voice in measure.voices:
             for beat in voice.beats:
+                if beat.status.value == 0:
+                    continue
                 file.write("%s" % 'b ' + str(beat.duration.value) + ' ' + str(int(beat.duration.isDotted)) + str(beat.status.value) + ' ' + str(beat.duration.tuplet.enters)  + str(beat.duration.tuplet.times)  + '\n')
                 for note in beat.notes:
                     file.write("%s" % 'n ' + str(note.string) + ' ' +  str(note.value) + ' ' + str(note.type.value) + str(int(note.effect.hammer)) + str(note.effect.slides[0].value+3 if len(note.effect.slides) > 0 else '0') + '\n')
-                    
-    # if insert_empty:
-    #         file.write('b 4 00\n')
                     
 def toGpx(file, track):   
     measure_header = gp.models.MeasureHeader()
@@ -165,7 +160,7 @@ elif exec_mode ==  '--gpx' or exec_mode ==  '-g':
         output_file_name = sys.argv[3]
         
     input_file = open(sys.argv[2], 'r')
-    output_file = gp.parse('reference.gp5') # Getting a blank .gp5 file for reference
+    output_file = gp.parse('input/reference.gp5') # Getting a blank .gp5 file for reference
     
     output_file.tracks[0] = toGpx(input_file, output_file.tracks[0])
     input_file.close()

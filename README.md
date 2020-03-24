@@ -9,11 +9,11 @@ A bass tab generator using a LSTM approach
 
 ## Motivation
 
-The purpose of this Artificial Intelligence project is to craft bass songs from patterns of different bands and musics
+The purpose of this Artificial Intelligence project is to create bass riffs based on playing patterns from different bands and musics from the funk rock genre.
 
 ## Setup
 - tuxguitar
-Can be downloaded in the following link : https://sourceforge.net/projects/tuxguitar/
+Can be downloaded through the following link : https://sourceforge.net/projects/tuxguitar/
 - tensorflow
 ```shell
 $ pip install tensorflow
@@ -22,10 +22,6 @@ $ pip install tensorflow
 ```shell
 $ pip install PyGuitarPro
 ```
-
-## Data
-
-The data was gathered from the site songsterr, using their plugin to download the songs.
 
 ## Scripts
 Antes de tudo, gostaria de salientar que ao me referir ao formato **.gpx**, na verdade estou me referindo à família de arquivos Guitar Pro das versões .gp3, .gp4 e .gp5\
@@ -82,14 +78,4 @@ A leitura sempre será feita pelo arquivo *"output.txt"* gerado pela conversão 
 ```bash
 python converter.py [-g ou --gpx] [arquivo de saida]
 ```
-**Obs:** Opte por gerar arquivos com a extensão **.gp5**. para que eles possam ser visualizados no TuxGuitar como pode ser visto a seguir:
-
-![](myimage.gif)
-
-
-## License
-
-[![License](http://img.shields.io/:license-mit-blue.svg?style=flat-square)](http://badges.mit-license.org)
-
-- **[MIT license](http://opensource.org/licenses/mit-license.php)**
-
+**Obs:** Opte por gerar arquivos com a extensão **.gp5**.
