@@ -23,7 +23,7 @@ $ pip install PyGuitarPro
 ```
 
 ## Scripts
-First of all, I would like to point out that when referring to the **. gpx ** format, I am actually referring to the Guitar Pro .gp3, .gp4 and .gp5 formats\
+First of all, I would like to point out that when referring to the **.gpx** format, I am actually referring to the Guitar Pro .gp3, .gp4 and .gp5 formats\
 The execution of the scripts is done exclusively in the terminal. Below are their descriptions.
 
 ### bass_ripper.py
